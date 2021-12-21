@@ -120,7 +120,7 @@ var h = data: vars.country11.data ++{ "US": {
 var y =(vars.country11 filterObject ((value, key, index) -> key as String !="data")) ++  h
 
 var filtered = y filterObject ((value, key, index) -> (key as String != "data"))
-var f = y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[0])) 
+var f = data:y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[0])) 
 
 
 ---
@@ -141,7 +141,7 @@ var h = data: vars.country11.data ++{ "US": {
 var y =(vars.country11 filterObject ((value, key, index) -> key as String !="data")) ++  h
 
 var filtered = y filterObject ((value, key, index) -> (key as String != "data"))
-var f = y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[1])) 
+var f = data: y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[1])) 
 
 
 ---
@@ -162,7 +162,7 @@ var h = data: vars.country11.data ++{ "US": {
 var y =(vars.country11 filterObject ((value, key, index) -> key as String !="data")) ++  h
 
 var filtered = y filterObject ((value, key, index) -> (key as String != "data"))
-var f = y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[2])) 
+var f = data:y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[2])) 
 
 
 ---
