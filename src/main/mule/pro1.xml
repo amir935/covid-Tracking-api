@@ -17,7 +17,7 @@ http://www.mulesoft.org/schema/mule/google-ad-manager http://www.mulesoft.org/sc
 		<flow-ref doc:name="exchange" doc:id="1634fb65-a5cb-42ca-9094-f9d19f848cee" name="exchange" />
 	</flow>
 	<sub-flow name="covid1" doc:id="7a5392e1-d428-4ac1-ac22-1cbe76b0e650">
-		<http:request method="GET" doc:name="corona-api." doc:id="cd34da10-9ac1-4a2c-a5f9-84b2c084b05b" url="https://corona-api.com/countries" target="corona">
+		<http:request method="GET" doc:name="corona-api." doc:id="cd34da10-9ac1-4a2c-a5f9-84b2c084b05b" url="https://corona-api.com/countries">
 			<reconnect-forever />
 		</http:request>
 		<ee:transform doc:name="Transform Message" doc:id="154a4c5a-78e6-401a-8a8f-8635bb371277">
@@ -26,22 +26,22 @@ http://www.mulesoft.org/schema/mule/google-ad-manager http://www.mulesoft.org/sc
 			<ee:variables>
 				<ee:set-variable variableName="covid"><![CDATA[%dw 2.0
 output application/json
-var d =(vars.corona.data.latest_data.deaths orderBy ((item, index) -> item))filter ((item, index) -> item != null)
-var f = vars.corona.data filter ((item, index) -> item.latest_data.deaths == d[-1] or item.latest_data.deaths == d[-2] or item.latest_data.deaths == d[-3])
+var d =(payload.data.latest_data.deaths orderBy ((item, index) -> item))filter ((item, index) -> item != null)
+var f = payload.data filter ((item, index) -> item.latest_data.deaths == d[-1] or item.latest_data.deaths == d[-2] or item.latest_data.deaths == d[-3])
 
 
 
 
 var r = f map ((item, index) -> item filterObject ((value, key, index) -> key as String == "population") )
-var latest_data = vars.corona.data.latest_data map ((item, index) -> item filterObject ((value, key, index) -> key as String != "calculated") )
+var latest_data = payload.data.latest_data map ((item, index) -> item filterObject ((value, key, index) -> key as String != "calculated") )
 var p = latest_data filter ((item, index) -> item.deaths == d[-1] or item.deaths == d[-2] or item.deaths == d[-3])
 ---
 [r[0] ++ p[0]] + (r[1] ++ p[1]) + (r[2] ++ p[2])]]></ee:set-variable>
 				<ee:set-variable variableName="Top3Data" ><![CDATA[%dw 2.0
 output application/json
-var d = vars.corona.data.latest_data.deaths orderBy ((item, index) -> item)
+var d = payload.data.latest_data.deaths orderBy ((item, index) -> item)
 ---
-vars.corona.data filter ((item, index) -> item.latest_data.deaths == d[-1] or item.latest_data.deaths == d[-2] or item.latest_data.deaths == d[-3] )]]></ee:set-variable>
+payload.data filter ((item, index) -> item.latest_data.deaths == d[-1] or item.latest_data.deaths == d[-2] or item.latest_data.deaths == d[-3] )]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
@@ -57,7 +57,7 @@ vars.Top3Data.coordinates]]></ee:set-payload>
 			</ee:variables>
 		</ee:transform>
 		<parallel-foreach doc:name="Parallel For Each" doc:id="37259494-af67-4bae-885c-9a9073554a66">
-			<http:request method="GET" doc:name="Request" doc:id="a48aa721-4b9a-4bca-9094-305fb0031b14" url="https://api.openweathermap.org/data/2.5/onecall">
+			<http:request method="GET" doc:name="weather Api" doc:id="a48aa721-4b9a-4bca-9094-305fb0031b14" url="https://api.openweathermap.org/data/2.5/onecall">
 				<http:query-params ><![CDATA[#[output application/java
 ---
 {
@@ -100,14 +100,14 @@ output application/json
 		</ee:transform>
 	</sub-flow>
 	<sub-flow name="Country" doc:id="f0175389-4765-4ae9-93c7-2bdb2d497450" >
-		<http:request method="GET" doc:name="Request" doc:id="b0ca3a16-1aa1-4ca5-843e-4d14a386b5e6" url="https://api.first.org/data/v1/countries" target="country11"/>
+		<http:request method="GET" doc:name="Request" doc:id="b0ca3a16-1aa1-4ca5-843e-4d14a386b5e6" url="https://api.first.org/data/v1/countries"/>
 		<ee:transform doc:name="source" doc:id="6a68ba79-e67c-4d4f-8912-70f646965f28">
 			<ee:message>
 			</ee:message>
 			<ee:variables>
 				<ee:set-variable variableName="country1"><![CDATA[%dw 2.0
 output application/json
-var h = data: vars.country11.data ++{ "US": {
+var h = data: payload.data ++{ "US": {
     "country": "United States",
     "region": "America"
   }
@@ -117,7 +117,7 @@ var h = data: vars.country11.data ++{ "US": {
     "region": "South America"
   }}
 
-var y =(vars.country11 filterObject ((value, key, index) -> key as String !="data")) ++  h
+var y =(payload filterObject ((value, key, index) -> key as String !="data")) ++  h
 
 var filtered = y filterObject ((value, key, index) -> (key as String != "data"))
 var f = data:y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[0])) 
@@ -128,7 +128,7 @@ var f = data:y.data filterObject ((value, key, index) -> (key as String == vars.
 filtered ++ f]]></ee:set-variable>
 				<ee:set-variable variableName="country2"><![CDATA[%dw 2.0
 output application/json
-var h = data: vars.country11.data ++{ "US": {
+var h = data: payload.data ++{ "US": {
     "country": "United States",
     "region": "America"
   }
@@ -138,7 +138,7 @@ var h = data: vars.country11.data ++{ "US": {
     "region": "South America"
   }}
 
-var y =(vars.country11 filterObject ((value, key, index) -> key as String !="data")) ++  h
+var y =(payload filterObject ((value, key, index) -> key as String !="data")) ++  h
 
 var filtered = y filterObject ((value, key, index) -> (key as String != "data"))
 var f = data: y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[1])) 
@@ -149,7 +149,7 @@ var f = data: y.data filterObject ((value, key, index) -> (key as String == vars
 filtered ++ f]]></ee:set-variable>
 				<ee:set-variable variableName="country3"><![CDATA[%dw 2.0
 output application/json
-var h = data: vars.country11.data ++{ "US": {
+var h = data: payload.data ++{ "US": {
     "country": "United States",
     "region": "America"
   }
@@ -159,7 +159,7 @@ var h = data: vars.country11.data ++{ "US": {
     "region": "South America"
   }}
 
-var y =(vars.country11 filterObject ((value, key, index) -> key as String !="data")) ++  h
+var y =(payload filterObject ((value, key, index) -> key as String !="data")) ++  h
 
 var filtered = y filterObject ((value, key, index) -> (key as String != "data"))
 var f = data:y.data filterObject ((value, key, index) -> (key as String == vars.Top3Data.code[2])) 
@@ -171,6 +171,60 @@ filtered ++ f]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
+	<flow name="pr2Flow" doc:id="31bf6fbb-4f1c-4fcb-8273-7dd75d4ef390" >
+		<http:listener doc:name="Listener" doc:id="4c44768e-8eeb-49a1-a53d-55d471560b9a" config-ref="HTTP_Listener_config" path="/p"/>
+		<http:request method="GET" doc:name="Request" doc:id="91a71ff9-7173-470e-a740-c0fb596a753c" url="https://corona-api.com/countries"/>
+		<ee:transform doc:name="Transform Message" doc:id="8140bcff-478c-41a6-bb80-6ec7aaa2be51" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var d = payload.data.latest_data.deaths orderBy ((item, index) -> item)
+---
+payload.data filter ((item, index) -> item.latest_data.deaths == d[-1] or item.latest_data.deaths == d[-2] or item.latest_data.deaths == d[-3] )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="4d48684d-af89-4e9d-8e22-31386adca23c" collection="#[payload.code]">
+			<ee:transform doc:name="Transform Message" doc:id="54978def-6d26-458b-908f-500c122ead70">
+			<ee:message>
+
+			</ee:message>
+			<ee:variables>
+					<ee:set-variable variableName="ex" ><![CDATA[%dw 2.0
+output application/json
+var p = readUrl("classpath://code.json", "application/json")
+var t = p filter ((item, index) ->item.CountryCode == payload)
+var u = t.Code
+---
+u[0]]]></ee:set-variable>
+
+			</ee:variables>
+		</ee:transform>
+			<http:request method="GET" doc:name="exchange" doc:id="9b79b35d-db29-4b4c-836d-8fde6266e69f" url="https://v6.exchangerate-api.com/v6/84e3718f9f57dafa347efee8/latest/USD">
+			<reconnect-forever />
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="692ce542-775d-4f5f-b7ba-85954d658691">
+			<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var p = payload filterObject ((value, key, index) -> (key as String != "conversion_rates"))
+var f = payload.conversion_rates  filterObject ((value, key, index) -> (key as String == vars.ex))
+---
+p ++ "conversion_rates": f]]></ee:set-payload>
+
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+		</parallel-foreach>
+		<ee:transform doc:name="Transform Message" doc:id="7c4684dc-c0fe-4201-93c9-0e8c642114fe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
 	<sub-flow name="exchange" doc:id="a86b5592-c872-408f-b9df-ead1460cb52a">
 		<ee:transform doc:name="Transform Message" doc:id="07f6dc7a-df8f-409a-b6d8-90bc4997a61a">
 			<ee:message>
@@ -200,19 +254,19 @@ var p = readUrl("classpath://code.json", "application/json")
 			<ee:message>
 			</ee:message>
 			<ee:variables>
-				<ee:set-variable variableName="Exchange2"><![CDATA[%dw 2.0
-output application/json
-var p = payload filterObject ((value, key, index) -> (key as String != "conversion_rates"))
-var f = payload.conversion_rates  filterObject ((value, key, index) -> (key as String == vars.exchangeRate2))
----
-p ++ "conversion_rates": f]]></ee:set-variable>
-				<ee:set-variable variableName="Exchange1"><![CDATA[%dw 2.0
+				<ee:set-variable variableName="Exchange1" ><![CDATA[%dw 2.0
 output application/json
 var p = payload filterObject ((value, key, index) -> (key as String != "conversion_rates"))
 var f = payload.conversion_rates  filterObject ((value, key, index) -> (key as String == vars.exchangeRate1))
 ---
 p ++ "conversion_rates": f]]></ee:set-variable>
-				<ee:set-variable variableName="Exchange3"><![CDATA[%dw 2.0
+				<ee:set-variable variableName="Exchange2" ><![CDATA[%dw 2.0
+output application/json
+var p = payload filterObject ((value, key, index) -> (key as String != "conversion_rates"))
+var f = payload.conversion_rates  filterObject ((value, key, index) -> (key as String == vars.exchangeRate2))
+---
+p ++ "conversion_rates": f]]></ee:set-variable>
+				<ee:set-variable variableName="Exchange3" ><![CDATA[%dw 2.0
 output application/json
 var p = payload filterObject ((value, key, index) -> (key as String != "conversion_rates"))
 var f = payload.conversion_rates  filterObject ((value, key, index) -> (key as String == vars.exchangeRate3))
@@ -258,7 +312,7 @@ var countryName3= vars.Top3Data.name[2]
 			<ee:variables >
 			</ee:variables>
 		</ee:transform>
-		<foreach doc:name="For Each" doc:id="03490ffe-98d0-4bd1-9181-23abb259e5be" collection="#[['covid1','covid','weathers1','weathers2','weathers3','Top3Data','country11','country1','country2','country3','Exchange1','Exchange2','Exchange3','exchangeRate1','exchangeRate2','exchangeRate3']]">
+		<foreach doc:name="For Each" doc:id="03490ffe-98d0-4bd1-9181-23abb259e5be" collection="#[['covid','weathers1','weathers2','weathers3','Top3Data','country1','country2','country3','Exchange1','Exchange2','Exchange3','exchangeRate1','exchangeRate2','exchangeRate3']]">
 			<remove-variable doc:name="Remove Variable" doc:id="72e4aabc-e412-411d-a270-533da1d4e112" variableName="#[payload]"/>
 		</foreach>
 	</flow>

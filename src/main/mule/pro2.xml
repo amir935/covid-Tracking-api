@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="pro2Flow" doc:id="117d4716-b9fd-4b2d-8780-cee4d0bc27ec" >
+		<http:listener doc:name="Listener" doc:id="5dd19c11-ce15-4134-8f3a-8ddc388f2bea" config-ref="HTTP_Listener_config" path="/s"/>
+		<http:request method="GET" doc:name="Request" doc:id="cb7e376b-8cba-4044-82a8-3202743b596a" url="https://corona-api.com/countries"/>
+		<ee:transform doc:name="Transform Message" doc:id="d09184fe-e760-4518-9d6d-c5b749804e37" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="top" ><![CDATA[%dw 2.0
+output application/json
+var d = payload.data.latest_data.deaths orderBy ((item, index) -> item)
+---
+payload.data filter ((item, index) -> item.latest_data.deaths == d[-1] or item.latest_data.deaths == d[-2] or item.latest_data.deaths == d[-3] )]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="ab6ec7b3-d2f3-47d0-b0a3-36016dff2c40" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.top.code]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="abbe70a9-db7e-4dd8-bfbb-01f712974f3e" collection="#[payload]">
+			<ee:transform doc:name="Transform Message" doc:id="07c3c2b6-0f25-4bf0-9999-e23048dcec0b">
+			<ee:message>
+
+			</ee:message>
+			<ee:variables>
+					<ee:set-variable variableName="ex"><![CDATA[%dw 2.0
+output application/json
+var p = readUrl("classpath://code.json", "application/json")
+var t = p filter ((item, index) ->item.CountryCode == payload)
+var u = t.Code
+---
+u[0]]]></ee:set-variable>
+
+			</ee:variables>
+		</ee:transform>
+			<http:request method="GET" doc:name="exchange" doc:id="5776b6ca-b110-432a-9df5-572aa293de80" url="https://v6.exchangerate-api.com/v6/84e3718f9f57dafa347efee8/latest/USD">
+			<reconnect-forever />
+		</http:request>
+			<ee:transform doc:name="Transform Message" doc:id="0a0e1e8b-875f-4df4-b105-c1575696fc59">
+			<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var p = payload filterObject ((value, key, index) -> (key as String != "conversion_rates"))
+var f = payload.conversion_rates  filterObject ((value, key, index) -> (key as String == vars.ex))
+---
+p ++ "conversion_rates": f]]></ee:set-payload>
+
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+		</parallel-foreach>
+		<ee:transform doc:name="Transform Message" doc:id="7b002c68-7a6a-4e9d-a4c6-1cacc12d5a00" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	
+	
+</mule>

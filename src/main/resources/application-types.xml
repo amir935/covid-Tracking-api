@@ -1915,4 +1915,7 @@ type auto_f564c8e6_209b_4c89_864a_b5b7e5c78d87_Output_Variables_Exchange = Any
       </types:output-event>
     </types:processor-declaration>
   </types:enrichment>
+  <types:enrichment select="#07c3c2b6-0f25-4bf0-9999-e23048dcec0b"/>
+  <types:enrichment select="#315abee0-e1fc-49d1-8b90-72736d79f5b1"/>
+  <types:enrichment select="#0a0e1e8b-875f-4df4-b105-c1575696fc59"/>
 </types:mule>
